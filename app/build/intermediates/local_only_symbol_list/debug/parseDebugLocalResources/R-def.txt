@@ -1,0 +1,27 @@
+R_DEF: Internal format may change without notice
+local
+color black
+color white
+drawable ic_brightness
+drawable ic_edit_pencil
+drawable ic_lightbulb_off
+drawable ic_lightbulb_on
+drawable ic_palette
+drawable ic_tick
+drawable widget_outer_bg
+drawable widget_tile_bg
+id widget_icon1
+id widget_icon2
+id widget_icon3
+id widget_slot1
+id widget_slot2
+id widget_slot3
+id widget_subtitle1
+id widget_subtitle2
+id widget_subtitle3
+id widget_title1
+id widget_title2
+id widget_title3
+layout widget_layout
+xml data_extraction_rules
+xml wiz_widget_info

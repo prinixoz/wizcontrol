@@ -1,0 +1,46 @@
+[
+    {
+        "merged": "com.example.wizcontrol.app-debug-31:/drawable_ic_edit_pencil.xml.flat",
+        "source": "com.example.wizcontrol.app-main-33:/drawable/ic_edit_pencil.xml"
+    },
+    {
+        "merged": "com.example.wizcontrol.app-debug-31:/drawable_ic_lightbulb_off.xml.flat",
+        "source": "com.example.wizcontrol.app-main-33:/drawable/ic_lightbulb_off.xml"
+    },
+    {
+        "merged": "com.example.wizcontrol.app-debug-31:/drawable_ic_lightbulb_on.xml.flat",
+        "source": "com.example.wizcontrol.app-main-33:/drawable/ic_lightbulb_on.xml"
+    },
+    {
+        "merged": "com.example.wizcontrol.app-debug-31:/drawable_ic_tick.xml.flat",
+        "source": "com.example.wizcontrol.app-main-33:/drawable/ic_tick.xml"
+    },
+    {
+        "merged": "com.example.wizcontrol.app-debug-31:/layout_widget_layout.xml.flat",
+        "source": "com.example.wizcontrol.app-main-33:/layout/widget_layout.xml"
+    },
+    {
+        "merged": "com.example.wizcontrol.app-debug-31:/xml_wiz_widget_info.xml.flat",
+        "source": "com.example.wizcontrol.app-main-33:/xml/wiz_widget_info.xml"
+    },
+    {
+        "merged": "com.example.wizcontrol.app-debug-31:/drawable_ic_palette.xml.flat",
+        "source": "com.example.wizcontrol.app-main-33:/drawable/ic_palette.xml"
+    },
+    {
+        "merged": "com.example.wizcontrol.app-debug-31:/xml_data_extraction_rules.xml.flat",
+        "source": "com.example.wizcontrol.app-main-33:/xml/data_extraction_rules.xml"
+    },
+    {
+        "merged": "com.example.wizcontrol.app-debug-31:/drawable_widget_outer_bg.xml.flat",
+        "source": "com.example.wizcontrol.app-main-33:/drawable/widget_outer_bg.xml"
+    },
+    {
+        "merged": "com.example.wizcontrol.app-debug-31:/drawable_ic_brightness.xml.flat",
+        "source": "com.example.wizcontrol.app-main-33:/drawable/ic_brightness.xml"
+    },
+    {
+        "merged": "com.example.wizcontrol.app-debug-31:/drawable_widget_tile_bg.xml.flat",
+        "source": "com.example.wizcontrol.app-main-33:/drawable/widget_tile_bg.xml"
+    }
+]
