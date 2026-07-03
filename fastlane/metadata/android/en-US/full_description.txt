@@ -1,0 +1,3 @@
+WizControl is a fully open-source, offline smart light controller specifically 
+built for WiZ light bulbs. It operates entirely on your local area network 
+without utilizing external clouds, account systems, or proprietary data tracking.

@@ -1,0 +1,1 @@
+Completely local, privacy-respecting WiZ smart light bulb controller dashboard.
