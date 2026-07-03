@@ -1,1 +1,1 @@
-Initial release of the privacy-respecting local WiZ smart controller app.
+Initial open-source release of the privacy-respecting local WiZ smart controller app.
