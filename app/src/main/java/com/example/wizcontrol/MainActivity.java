@@ -1,5 +1,6 @@
 package com.example.wizcontrol;
 
+import android.animation.ValueAnimator;
 import android.app.AlertDialog;
 import android.appwidget.AppWidgetManager;
 import android.content.ComponentName;
@@ -54,8 +55,12 @@ public class MainActivity extends AppCompatActivity {
     private String activeTargetIp;
     private int activeDeviceIndex = 0;
     private boolean activeDevicePowerState = true;
+    private int activeDeviceBrightness = 43;
     
     private TextView detailedTitleText;
+    private TextView percentText;
+    private TextView subtitleText;
+    private ImageView topPowerBtn;
     private GooglePillSlider customSlider;
     private int currentActiveColor = 0xFFFBE29F;
     private final List<FrameLayout> colorCirclesList = new ArrayList<>();
@@ -88,6 +93,31 @@ public class MainActivity extends AppCompatActivity {
         rootContainer.addView(dashboardLayout);
         setContentView(rootContainer);
         syncWidgetMemoryMatrix();
+
+        handleWidgetIntentDeepLink(getIntent());
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        handleWidgetIntentDeepLink(intent);
+    }
+
+    private void handleWidgetIntentDeepLink(Intent intent) {
+        if (intent != null && intent.hasExtra("TARGET_DEVICE_INDEX")) {
+            int targetedIndex = intent.getIntExtra("TARGET_DEVICE_INDEX", -1);
+            if (targetedIndex >= 0 && targetedIndex < LIGHT_IPS.size()) {
+                activeDeviceIndex = targetedIndex;
+                activeTargetIp = LIGHT_IPS.get(targetedIndex);
+                String label = LIGHT_NAMES.get(targetedIndex);
+                
+                detailedTitleText.setText(label);
+                updateDetailsPageVisuals(activeDevicePowerState, activeDeviceBrightness);
+                
+                openDetailedControlScreen(label);
+            }
+        }
     }
 
     @Override
@@ -133,10 +163,10 @@ public class MainActivity extends AppCompatActivity {
             namesBuilder.append(LIGHT_NAMES.get(i));
         }
         SharedPreferences prefs = getSharedPreferences("WizPrefs", MODE_PRIVATE);
-        prefs.edit()
-             .putString("ips", ipsBuilder.toString())
-             .putString("names", namesBuilder.toString())
-             .apply();
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.putString("ips", ipsBuilder.toString());
+        editor.putString("names", namesBuilder.toString());
+        editor.apply();
 
         Intent intent = new Intent(this, WizWidgetProvider.class);
         intent.setAction(AppWidgetManager.ACTION_APPWIDGET_UPDATE);
@@ -206,17 +236,46 @@ public class MainActivity extends AppCompatActivity {
             tile.setTileListener(new GoogleDashboardTile.TileInteractionListener() {
                 @Override
                 public void onToggleAction(boolean isCurrentlyOn) {
-                    if (index == activeDeviceIndex) activeDevicePowerState = isCurrentlyOn;
-                    sendWizMsg(targetIp, "{\"method\":\"setPilot\",\"params\":{\"state\":" + isCurrentlyOn + "}}");
+                    if (index == activeDeviceIndex) {
+                        activeDevicePowerState = isCurrentlyOn;
+                        if (activeDevicePowerState && activeDeviceBrightness == 0) {
+                            activeDeviceBrightness = 100;
+                            sendWizMsg(targetIp, "{\"method\":\"setPilot\",\"params\":{\"state\":true,\"dimming\":100}}");
+                        } else {
+                            sendWizMsg(targetIp, "{\"method\":\"setPilot\",\"params\":{\"state\":" + isCurrentlyOn + "}}");
+                        }
+                        if(detailedViewLayout.getVisibility() == View.VISIBLE) {
+                            updateDetailsPageVisuals(activeDevicePowerState, activeDeviceBrightness);
+                        }
+                    } else {
+                        if (isCurrentlyOn && tile.currentBrightness == 0) {
+                            tile.currentBrightness = 100;
+                            sendWizMsg(targetIp, "{\"method\":\"setPilot\",\"params\":{\"state\":true,\"dimming\":100}}");
+                        } else {
+                            sendWizMsg(targetIp, "{\"method\":\"setPilot\",\"params\":{\"state\":" + isCurrentlyOn + "}}");
+                        }
+                    }
+                    syncWidgetMemoryMatrix();
                 }
                 @Override
                 public void onBrightnessSlideAction(int currentBrightness) {
-                    sendWizMsg(targetIp, "{\"method\":\"setPilot\",\"params\":{\"dimming\":" + currentBrightness + "}}");
+                    if (currentBrightness == 0) {
+                        sendWizMsg(targetIp, "{\"method\":\"setPilot\",\"params\":{\"state\":false}}");
+                    } else {
+                        sendWizMsg(targetIp, "{\"method\":\"setPilot\",\"params\":{\"state\":true,\"dimming\":" + currentBrightness + "}}");
+                    }
+                    syncWidgetMemoryMatrix();
                 }
                 @Override
                 public void onLongPressTrigger() {
                     activeTargetIp = targetIp;
                     activeDeviceIndex = index;
+                    activeDevicePowerState = tile.isPowerOn;
+                    activeDeviceBrightness = tile.currentBrightness;
+                    
+                    detailedTitleText.setText(label);
+                    updateDetailsPageVisuals(activeDevicePowerState, activeDeviceBrightness);
+                    
                     openDetailedControlScreen(label);
                 }
             });
@@ -255,19 +314,30 @@ public class MainActivity extends AppCompatActivity {
         detailedTitleText.setLayoutParams(titleParams);
         headerRow.addView(detailedTitleText);
 
-        ImageView topPowerBtn = new ImageView(this);
+        topPowerBtn = new ImageView(this);
         topPowerBtn.setImageResource(android.R.drawable.ic_lock_power_off);
         topPowerBtn.setColorFilter(Color.WHITE);
         topPowerBtn.setPadding(20, 20, 20, 20);
         topPowerBtn.setOnClickListener(v -> {
             activeDevicePowerState = !activeDevicePowerState;
-            topPowerBtn.setColorFilter(activeDevicePowerState ? 0xFFE5C158 : Color.WHITE);
-            sendWizMsg(activeTargetIp, "{\"method\":\"setPilot\",\"params\":{\"state\":" + activeDevicePowerState + "}}");
+            
+            if (activeDevicePowerState && activeDeviceBrightness == 0) {
+                activeDeviceBrightness = 100;
+                sendWizMsg(activeTargetIp, "{\"method\":\"setPilot\",\"params\":{\"state\":true,\"dimming\":100}}");
+            } else {
+                sendWizMsg(activeTargetIp, "{\"method\":\"setPilot\",\"params\":{\"state\":" + activeDevicePowerState + "}}");
+            }
+            
+            updateDetailsPageVisuals(activeDevicePowerState, activeDeviceBrightness);
+            if (activeDeviceIndex < dashboardTilesList.size()) {
+                dashboardTilesList.get(activeDeviceIndex).updateStateFromHardware(activeDevicePowerState, activeDeviceBrightness);
+            }
+            syncWidgetMemoryMatrix();
         });
         headerRow.addView(topPowerBtn);
 
         ImageView topEditSettingsBtn = new ImageView(this);
-        topEditSettingsBtn.setImageResource(R.drawable.ic_edit_pencil); 
+        topEditSettingsBtn.setImageResource(R.drawable.ic_menu_more); 
         topEditSettingsBtn.setColorFilter(Color.WHITE);
         topEditSettingsBtn.setPadding(20, 20, 20, 20);
         topEditSettingsBtn.setOnClickListener(v -> showEditDeviceSettingsDialog());
@@ -276,13 +346,13 @@ public class MainActivity extends AppCompatActivity {
         detailedViewLayout.addView(headerRow);
 
         FrameLayout sliderContainer = new FrameLayout(this);
-        LinearLayout.LayoutParams containerParams = new LinearLayout.LayoutParams(520, 950); 
+        LinearLayout.LayoutParams containerParams = new LinearLayout.LayoutParams(420, 950); 
         containerParams.gravity = Gravity.CENTER_HORIZONTAL;
         containerParams.bottomMargin = 50;
         sliderContainer.setLayoutParams(containerParams);
 
         customSlider = new GooglePillSlider(this);
-        customSlider.setProgress(43);
+        customSlider.setProgress(activeDeviceBrightness);
         customSlider.setFillColor(currentActiveColor);
         sliderContainer.addView(customSlider);
         detailedViewLayout.addView(sliderContainer);
@@ -296,7 +366,7 @@ public class MainActivity extends AppCompatActivity {
         textBlockParams.bottomMargin = 80;
         textBlock.setLayoutParams(textBlockParams);
 
-        final TextView percentText = new TextView(this);
+        percentText = new TextView(this);
         percentText.setText("43%");
         percentText.setTextSize(24);
         percentText.setTextColor(Color.WHITE);
@@ -304,7 +374,7 @@ public class MainActivity extends AppCompatActivity {
         percentText.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
         textBlock.addView(percentText);
 
-        TextView subtitleText = new TextView(this);
+        subtitleText = new TextView(this);
         subtitleText.setText("Brightness");
         subtitleText.setTextSize(14);
         subtitleText.setTextColor(0xFF999999);
@@ -314,10 +384,25 @@ public class MainActivity extends AppCompatActivity {
         detailedViewLayout.addView(textBlock);
 
         customSlider.setListener(progress -> {
-            percentText.setText(progress + "%");
-            if (progress > 0) {
-                sendWizMsg(activeTargetIp, "{\"method\":\"setPilot\",\"params\":{\"dimming\":" + progress + "}}");
+            activeDeviceBrightness = progress;
+            
+            if (progress == 0) {
+                activeDevicePowerState = false;
+                sendWizMsg(activeTargetIp, "{\"method\":\"setPilot\",\"params\":{\"state\":false}}");
+            } else {
+                if (!activeDevicePowerState) {
+                    activeDevicePowerState = true;
+                    sendWizMsg(activeTargetIp, "{\"method\":\"setPilot\",\"params\":{\"state\":true,\"dimming\":" + progress + "}}");
+                } else {
+                    sendWizMsg(activeTargetIp, "{\"method\":\"setPilot\",\"params\":{\"dimming\":" + progress + "}}");
+                }
             }
+            
+            updateDetailsPageVisuals(activeDevicePowerState, progress);
+            if (activeDeviceIndex < dashboardTilesList.size()) {
+                dashboardTilesList.get(activeDeviceIndex).updateStateFromHardware(activeDevicePowerState, progress);
+            }
+            syncWidgetMemoryMatrix();
         });
 
         LinearLayout optionsRow = new LinearLayout(this);
@@ -344,6 +429,20 @@ public class MainActivity extends AppCompatActivity {
         detailedViewLayout.addView(optionsRow);
         
         rootContainer.addView(detailedViewLayout);
+    }
+
+    private void updateDetailsPageVisuals(boolean powerState, int brightness) {
+        customSlider.setPowerStateAnimated(powerState && brightness > 0);
+        customSlider.setProgress(brightness);
+        topPowerBtn.setColorFilter((powerState && brightness > 0) ? 0xFFE5C158 : Color.WHITE);
+        
+        if (powerState && brightness > 0) {
+            percentText.setText(brightness + "%");
+            subtitleText.setVisibility(View.VISIBLE);
+        } else {
+            percentText.setText("Off");
+            subtitleText.setVisibility(View.GONE);
+        }
     }
 
     private void showAddDeviceDialog() {
@@ -463,7 +562,8 @@ public class MainActivity extends AppCompatActivity {
                     }
                     if (detailedViewLayout.getVisibility() == View.VISIBLE && index == activeDeviceIndex) {
                         activeDevicePowerState = hardwarePowerState;
-                        customSlider.setProgress(hardwareBrightness);
+                        activeDeviceBrightness = hardwareBrightness;
+                        updateDetailsPageVisuals(hardwarePowerState, hardwareBrightness);
                     }
                 });
             } catch (Exception e) {
@@ -661,9 +761,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public static class GoogleDashboardTile extends FrameLayout {
-        private final String deviceName;
-        private boolean isPowerOn = true;
-        private int currentBrightness = 64;
+        public String deviceName;
+        public boolean isPowerOn = true;
+        public int currentBrightness = 64;
         
         private final View fillBackgroundMaskView;
         private final ImageView iconView;
@@ -684,6 +784,7 @@ public class MainActivity extends AppCompatActivity {
             }
         };
 
+        // RESTORED: Declared the listener interface structure explicitly inside the container scope
         public interface TileInteractionListener {
             void onToggleAction(boolean isOn);
             void onBrightnessSlideAction(int brValue);
@@ -740,26 +841,27 @@ public class MainActivity extends AppCompatActivity {
 
         public void updateStateFromHardware(boolean powerState, int brValue) {
             if (!isSlidingActive) {
-                this.isPowerOn = powerState;
+                this.isPowerOn = powerState && brValue > 0;
                 this.currentBrightness = brValue;
                 syncLayoutStateProperties();
             }
         }
 
         private void syncLayoutStateProperties() {
+            boolean activeOn = isPowerOn && currentBrightness > 0;
             titleLabel.setText(deviceName);
-            titleLabel.setTextColor(isPowerOn ? 0xFFE5C158 : 0xFFCCCCCC);
-            subtitleLabel.setText(isPowerOn ? "On • " + currentBrightness + "%" : "Off");
-            subtitleLabel.setTextColor(isPowerOn ? 0xFFD8C395 : 0xFF888888);
+            titleLabel.setTextColor(activeOn ? 0xFFE5C158 : 0xFFCCCCCC);
+            subtitleLabel.setText(activeOn ? "On • " + currentBrightness + "%" : "Off");
+            subtitleLabel.setTextColor(activeOn ? 0xFFD8C395 : 0xFF888888);
             
-            iconView.setImageResource(isPowerOn ? R.drawable.ic_lightbulb_on : R.drawable.ic_lightbulb_off);
-            iconView.setColorFilter(isPowerOn ? 0xFFE5C158 : 0xFFCCCCCC);
+            iconView.setImageResource(activeOn ? R.drawable.ic_lightbulb_on : R.drawable.ic_lightbulb_off);
+            iconView.setColorFilter(activeOn ? 0xFFE5C158 : 0xFFCCCCCC);
 
             post(() -> {
                 int baseWidth = getWidth();
                 ViewGroup.LayoutParams params = fillBackgroundMaskView.getLayoutParams();
                 params.height = getHeight();
-                params.width = isPowerOn ? (int) (baseWidth * (currentBrightness / 100f)) : 0;
+                params.width = (isPowerOn && currentBrightness > 0) ? (int) (baseWidth * (currentBrightness / 100f)) : 0;
                 fillBackgroundMaskView.setLayoutParams(params);
             });
         }
@@ -774,22 +876,25 @@ public class MainActivity extends AppCompatActivity {
                     initialTouchY = currentY;
                     isSlidingActive = false;
                     isLongPressFired = false;
-                    longPressHandler.postDelayed(longPressRunnable, 450);
+                    longPressHandler.postDelayed(longPressRunnable, 400);
                     getParent().requestDisallowInterceptTouchEvent(true);
                     return true;
                 case MotionEvent.ACTION_MOVE:
                     float horizontalDelta = Math.abs(currentX - initialTouchX);
-                    float verticalDelta = Math.abs(currentY - initialTouchY);
-                    if (horizontalDelta > 20f || verticalDelta > 20f) longPressHandler.removeCallbacks(longPressRunnable);
+                    if (horizontalDelta > 20f) {
+                        longPressHandler.removeCallbacks(longPressRunnable);
+                    }
                     if ((horizontalDelta > 25f || isSlidingActive) && !isLongPressFired) {
                         isSlidingActive = true;
                         int updatedBrightness = Math.round((currentX / getWidth()) * 100f);
-                        updatedBrightness = Math.max(10, Math.min(100, updatedBrightness));
+                        updatedBrightness = Math.max(0, Math.min(100, updatedBrightness));
                         if (updatedBrightness != currentBrightness) {
                             currentBrightness = updatedBrightness;
-                            isPowerOn = true;
+                            isPowerOn = updatedBrightness > 0;
                             syncLayoutStateProperties();
-                            if (interactionListener != null) interactionListener.onBrightnessSlideAction(currentBrightness);
+                            if (interactionListener != null) {
+                                interactionListener.onBrightnessSlideAction(currentBrightness);
+                            }
                         }
                     }
                     return true;
@@ -799,7 +904,9 @@ public class MainActivity extends AppCompatActivity {
                     if (!isSlidingActive && !isLongPressFired && ev.getAction() == MotionEvent.ACTION_UP) {
                         isPowerOn = !isPowerOn;
                         syncLayoutStateProperties();
-                        if (interactionListener != null) interactionListener.onToggleAction(isPowerOn);
+                        if (interactionListener != null) {
+                            interactionListener.onToggleAction(isPowerOn);
+                        }
                     }
                     isSlidingActive = false;
                     return true;
@@ -811,9 +918,11 @@ public class MainActivity extends AppCompatActivity {
     private static class GooglePillSlider extends View {
         private int progress = 43;
         private int fillColor = 0xFFFBE29F; 
+        private float morphAlpha = 1.0f; 
         private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
         private final RectF rect = new RectF();
         private SliderListener listener;
+        private ValueAnimator shapeAnimator;
 
         public interface SliderListener { void onProgressChanged(int progress); }
         public GooglePillSlider(Context context) { super(context); }
@@ -821,41 +930,58 @@ public class MainActivity extends AppCompatActivity {
         public void setFillColor(int color) { this.fillColor = color; invalidate(); }
         public void setListener(SliderListener l) { this.listener = l; }
 
+        public void setPowerStateAnimated(boolean powerOn) {
+            if (shapeAnimator != null) shapeAnimator.cancel();
+            
+            float targetAlpha = powerOn ? 1.0f : 0.0f;
+            shapeAnimator = ValueAnimator.ofFloat(morphAlpha, targetAlpha);
+            shapeAnimator.setDuration(250);
+            shapeAnimator.addUpdateListener(animation -> {
+                morphAlpha = (float) animation.getAnimatedValue();
+                invalidate();
+            });
+            shapeAnimator.start();
+        }
+
         @Override
         protected void onDraw(Canvas canvas) {
             super.onDraw(canvas);
             float w = getWidth();
             float h = getHeight();
-            float radius = w / 2f;
+            
+            float rectangleRadius = 24f * getResources().getDisplayMetrics().density;
+            float ovalRadius = w / 2f;
+            float dynamicCornerRadius = rectangleRadius + (morphAlpha * (ovalRadius - rectangleRadius));
 
             rect.set(0, 0, w, h);
-            paint.setColor(0xFF444444); 
-            canvas.drawRoundRect(rect, radius, radius, paint);
+            paint.setColor(0xFF333333); 
+            canvas.drawRoundRect(rect, dynamicCornerRadius, dynamicCornerRadius, paint);
 
-            float fillHeight = h * (progress / 100f);
-            canvas.save();
-            canvas.clipRect(0, h - fillHeight, w, h);
-            rect.set(0, 0, w, h);
-            paint.setColor(fillColor); 
-            canvas.drawRoundRect(rect, radius, radius, paint);
-            canvas.restore();
+            if (morphAlpha > 0f) {
+                float fillHeight = h * (progress / 100f);
+                canvas.save();
+                canvas.clipRect(0, h - fillHeight, w, h);
+                rect.set(0, 0, w, h);
+                paint.setColor(fillColor);
+                paint.setAlpha((int) (morphAlpha * 255));
+                canvas.drawRoundRect(rect, dynamicCornerRadius, dynamicCornerRadius, paint);
+                canvas.restore();
+            }
 
-            if (fillHeight > 180) {
-                Drawable sunIcon = ContextCompat.getDrawable(getContext(), R.drawable.ic_brightness);
-                if (sunIcon != null) {
-                    sunIcon.setTint(0xFF5D4037);
-                    int targetIconSize = 96;
-                    int leftOffset = (int) (w / 2f - targetIconSize / 2f);
-                    int topOffset = (int) (h - 150f);
-                    
-                    canvas.save();
-                    canvas.translate(leftOffset, topOffset);
-                    float scaleFactor = (float) targetIconSize / 960f;
-                    canvas.scale(scaleFactor, scaleFactor);
-                    sunIcon.setBounds(0, 0, 960, 960);
-                    sunIcon.draw(canvas);
-                    canvas.restore();
-                }
+            Drawable sunIcon = ContextCompat.getDrawable(getContext(), R.drawable.ic_brightness);
+            if (sunIcon != null) {
+                sunIcon.setTint(morphAlpha > 0.5f ? 0xFF5D4037 : 0xFFFFFFFF);
+                int targetIconSize = 96;
+                int leftOffset = (int) (w / 2f - targetIconSize / 2f);
+                int topOffset = (int) (h - 260f);
+                
+                canvas.save();
+                canvas.translate(leftOffset, topOffset);
+                float scaleFactor = (float) targetIconSize / 960f;
+                canvas.scale(scaleFactor, scaleFactor);
+                sunIcon.setBounds(0, 0, 960, 960);
+                sunIcon.draw(canvas);
+                canvas.restore();
             }
         }
 

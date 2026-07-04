@@ -1,32 +1,48 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_root_bg"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/widget_outer_bg"
     android:orientation="horizontal"
-    android:padding="8dp"
+    android:padding="12dp"
     android:weightSum="3.0">
 
-    <!-- SLOT 1 CONTAINER -->
-    <RelativeLayout
+    <LinearLayout
         android:id="@+id/widget_slot1"
         android:layout_width="0dp"
         android:layout_height="match_parent"
         android:layout_weight="1.0"
         android:layout_margin="6dp"
-        android:background="@drawable/widget_tile_bg"
-        android:padding="12dp"
+        android:background="@drawable/widget_tile_off"
+        android:orientation="vertical"
+        android:weightSum="10.0"
         android:visibility="invisible">
-        <ImageView
-            android:id="@+id/widget_icon1"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
-            android:src="@drawable/ic_lightbulb_on" />
-        <LinearLayout
+        
+        <FrameLayout
+            android:id="@+id/widget_link_zone1"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_alignParentBottom="true"
-            android:orientation="vertical">
+            android:layout_height="0dp"
+            android:layout_weight="6.0"
+            android:padding="14dp">
+            <ImageView
+                android:id="@+id/widget_icon1"
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:layout_gravity="top|start"
+                android:src="@drawable/ic_lightbulb_on" />
+        </FrameLayout>
+
+        <LinearLayout
+            android:id="@+id/widget_toggle_zone1"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="4.0"
+            android:orientation="vertical"
+            android:gravity="bottom|start"
+            android:paddingStart="14dp"
+            android:paddingEnd="14dp"
+            android:paddingBottom="14dp">
             <TextView
                 android:id="@+id/widget_title1"
                 android:layout_width="match_parent"
@@ -40,30 +56,46 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:textColor="#FFAAAAAA"
-                android:textSize="11sp" />
+                android:textSize="12sp"
+                android:paddingTop="2dp" />
         </LinearLayout>
-    </RelativeLayout>
+    </LinearLayout>
 
-    <!-- SLOT 2 CONTAINER -->
-    <RelativeLayout
+    <LinearLayout
         android:id="@+id/widget_slot2"
         android:layout_width="0dp"
         android:layout_height="match_parent"
         android:layout_weight="1.0"
         android:layout_margin="6dp"
-        android:background="@drawable/widget_tile_bg"
-        android:padding="12dp"
+        android:background="@drawable/widget_tile_off"
+        android:orientation="vertical"
+        android:weightSum="10.0"
         android:visibility="invisible">
-        <ImageView
-            android:id="@+id/widget_icon2"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
-            android:src="@drawable/ic_lightbulb_on" />
-        <LinearLayout
+        
+        <FrameLayout
+            android:id="@+id/widget_link_zone2"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_alignParentBottom="true"
-            android:orientation="vertical">
+            android:layout_height="0dp"
+            android:layout_weight="6.0"
+            android:padding="14dp">
+            <ImageView
+                android:id="@+id/widget_icon2"
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:layout_gravity="top|start"
+                android:src="@drawable/ic_lightbulb_on" />
+        </FrameLayout>
+
+        <LinearLayout
+            android:id="@+id/widget_toggle_zone2"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="4.0"
+            android:orientation="vertical"
+            android:gravity="bottom|start"
+            android:paddingStart="14dp"
+            android:paddingEnd="14dp"
+            android:paddingBottom="14dp">
             <TextView
                 android:id="@+id/widget_title2"
                 android:layout_width="match_parent"
@@ -77,30 +109,46 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:textColor="#FFAAAAAA"
-                android:textSize="11sp" />
+                android:textSize="12sp"
+                android:paddingTop="2dp" />
         </LinearLayout>
-    </RelativeLayout>
+    </LinearLayout>
 
-    <!-- SLOT 3 CONTAINER -->
-    <RelativeLayout
+    <LinearLayout
         android:id="@+id/widget_slot3"
         android:layout_width="0dp"
         android:layout_height="match_parent"
         android:layout_weight="1.0"
         android:layout_margin="6dp"
-        android:background="@drawable/widget_tile_bg"
-        android:padding="12dp"
+        android:background="@drawable/widget_tile_off"
+        android:orientation="vertical"
+        android:weightSum="10.0"
         android:visibility="invisible">
-        <ImageView
-            android:id="@+id/widget_icon3"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
-            android:src="@drawable/ic_lightbulb_on" />
-        <LinearLayout
+        
+        <FrameLayout
+            android:id="@+id/widget_link_zone3"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_alignParentBottom="true"
-            android:orientation="vertical">
+            android:layout_height="0dp"
+            android:layout_weight="6.0"
+            android:padding="14dp">
+            <ImageView
+                android:id="@+id/widget_icon3"
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:layout_gravity="top|start"
+                android:src="@drawable/ic_lightbulb_on" />
+        </FrameLayout>
+
+        <LinearLayout
+            android:id="@+id/widget_toggle_zone3"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="4.0"
+            android:orientation="vertical"
+            android:gravity="bottom|start"
+            android:paddingStart="14dp"
+            android:paddingEnd="14dp"
+            android:paddingBottom="14dp">
             <TextView
                 android:id="@+id/widget_title3"
                 android:layout_width="match_parent"
@@ -114,7 +162,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:textColor="#FFAAAAAA"
-                android:textSize="11sp" />
+                android:textSize="12sp"
+                android:paddingTop="2dp" />
         </LinearLayout>
-    </RelativeLayout>
+    </LinearLayout>
 </LinearLayout>
